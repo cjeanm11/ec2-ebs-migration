@@ -96,3 +96,7 @@ variable "volume_size" {
   default     = 8  
 }
 
+variable "existing_instance_id" {
+  type        = string
+  description = "The ID of an existing EC2 instance"
+}

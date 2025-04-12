@@ -18,22 +18,6 @@ data "aws_ami" "ubuntu" {
   owners = var.ami_owners
 }
 
-resource "aws_ebs_snapshot" "volume_snapshot" {
-  volume_id = var.existing_volume_id
-  tags = {
-    Name = "migration-snapshot"
-  }
-}
-
-resource "aws_ebs_volume" "new_data_volume" {
-  snapshot_id       = aws_ebs_snapshot.volume_snapshot.id
-  availability_zone = var.availability_zone
-  size              = var.volume_size 
-  tags = {
-    Name = "migrated-volume-${var.instance_name}"  
-  }
-}
-
 resource "aws_security_group" "sg_8080" {
   name = var.security_group_name
 
@@ -59,16 +43,42 @@ resource "aws_instance" "new_instance" {
   user_data              = var.user_data
 
   tags = {
-    Name = "EC2-${var.instance_name}"  
+    Name = "EC2-${var.instance_name}"
   }
 
   lifecycle {
-    create_before_destroy = true  
+    create_before_destroy = true
   }
 }
 
-resource "aws_volume_attachment" "ebs_attach" {
+resource "null_resource" "stop_instance" {
+  provisioner "local-exec" {
+    command = "aws ec2 stop-instances --instance-ids ${var.existing_instance_id} --region ${var.aws_region}"
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+}
+
+resource "null_resource" "force_detach_existing" {
+  depends_on = [null_resource.stop_instance]
+  
+  provisioner "local-exec" {
+    command = <<EOT
+    aws ec2 detach-volume --volume-id ${var.existing_volume_id} --region ${var.aws_region}
+    aws ec2 wait volume-available --volume-ids ${var.existing_volume_id} --region ${var.aws_region}
+    EOT
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+}
+
+resource "aws_volume_attachment" "reattach_existing" {
+  depends_on  = [null_resource.force_detach_existing]
   device_name = var.device_name
-  volume_id   = aws_ebs_volume.new_data_volume.id
+  volume_id   = var.existing_volume_id
   instance_id = aws_instance.new_instance.id
 }
