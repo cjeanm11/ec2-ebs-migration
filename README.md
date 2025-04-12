@@ -2,7 +2,7 @@
 
 This Terraform script provides two different strategies to migrate an existing AWS EBS volume to a new EC2 instance, based on the current Git branch.
 
-1.	Snapshot-Based Strategy (i.e. `git checkout main`):
+#### 1.	Snapshot-Based Strategy (i.e. `git checkout main`):
 *	Captures the state of the existing EBS volume by creating a snapshot.
 *	Uses the snapshot to create a new EBS volume.
 *	Launches a new EC2 instance with the specified AMI and attaches the new EBS volume.
@@ -11,14 +11,14 @@ This Terraform script provides two different strategies to migrate an existing A
 **Con**: Storage costs, time-consuming, and extra complexity.
 
 
-2.	Direct Copy Strategy (i.e. `git checkout direct_copy`):
+#### 2.	Direct Copy Strategy (i.e. `git checkout direct_copy`):
 *	Directly copies the existing EBS volume to a new volume without creating a snapshot.
 *	Launches a new EC2 instance and attaches the newly created volume to it.
 
 **Pro**: Faster, no snapshot storage costs, and simpler.
 **Con**: No backup, potential data corruption, limited flexibility.
 
-3.	Reattach Existing EBS Volume Strategy (i.e. `git checkout reattach`):
+#### 3.	Reattach Existing EBS Volume Strategy (i.e. `git checkout reattach`):
 *	Stops the existing EC2 instance.
 *	Detaches the existing EBS volume from the current EC2 instance.
 *	Launches a new EC2 instance.
