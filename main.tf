@@ -18,19 +18,13 @@ data "aws_ami" "ubuntu" {
   owners = var.ami_owners
 }
 
-resource "aws_ebs_snapshot" "volume_snapshot" {
-  volume_id = var.existing_volume_id
-  tags = {
-    Name = "migration-snapshot"
-  }
-}
-
-resource "aws_ebs_volume" "new_data_volume" {
-  snapshot_id       = aws_ebs_snapshot.volume_snapshot.id
+# Create a new EBS volume directly from the existing EBS volume (Direct Copy)
+resource "aws_ebs_volume" "new_data_volume_copy" {
   availability_zone = var.availability_zone
-  size              = var.volume_size 
+  size             = var.volume_size
+
   tags = {
-    Name = "migrated-volume-${var.instance_name}"  
+    Name = "migrated-volume-${var.instance_name}"
   }
 }
 
@@ -59,16 +53,20 @@ resource "aws_instance" "new_instance" {
   user_data              = var.user_data
 
   tags = {
-    Name = "EC2-${var.instance_name}"  
+    Name = "EC2-${var.instance_name}"
   }
 
   lifecycle {
-    create_before_destroy = true  
+    create_before_destroy = true
   }
 }
 
-resource "aws_volume_attachment" "ebs_attach" {
-  device_name = var.device_name
-  volume_id   = aws_ebs_volume.new_data_volume.id
-  instance_id = aws_instance.new_instance.id
+resource "aws_volume_attachment" "ebs_attach_copy" {
+  device_name  = var.device_name
+  volume_id    = aws_ebs_volume.new_data_volume_copy.id
+  instance_id  = aws_instance.new_instance.id
+}
+
+output "volume_id" {
+  value = aws_ebs_volume.new_data_volume_copy.id
 }
