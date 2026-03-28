@@ -1,6 +1,6 @@
 ### EBS Volume Migration to New EC2 Instance with Terraform
 
-This Terraform script provides two different strategies to migrate an existing AWS EBS volume to a new EC2 instance, based on the current Git branch.
+This Terraform script provides three different strategies to migrate an existing AWS EBS volume to a new EC2 instance, based on the current Git branch.
 
 #### 1.	Snapshot-Based Strategy (i.e. `git checkout main`):
 *	Captures the state of the existing EBS volume by creating a snapshot.
